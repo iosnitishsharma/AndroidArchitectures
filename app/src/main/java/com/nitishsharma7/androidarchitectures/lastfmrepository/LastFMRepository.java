@@ -14,6 +14,7 @@ public class LastFMRepository {
     public LastFMRepository(@NonNull final LastFMAPI lastFMAPI) {
         this.api = lastFMAPI;
     }
+
     public void searchSongsOfGenre(@NonNull final String query,
                             @NonNull final Callback callback) {
         Call<TagTracksResponse> call = api.getGenreTopTracks(query, AppConstants.KEY);

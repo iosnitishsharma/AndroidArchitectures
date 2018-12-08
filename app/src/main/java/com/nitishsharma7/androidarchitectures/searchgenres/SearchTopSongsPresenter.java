@@ -11,7 +11,7 @@ public class SearchTopSongsPresenter implements SearchPresenterContract, LastFMR
     private final SearchViewContract viewContract;
     private final LastFMRepository repository;
 
-      SearchTopSongsPresenter(@NonNull final SearchViewContract viewContract,
+      public SearchTopSongsPresenter(@NonNull final SearchViewContract viewContract,
                             @NonNull final LastFMRepository repository) {
         this.viewContract = viewContract;
         this.repository = repository;
@@ -36,7 +36,8 @@ public class SearchTopSongsPresenter implements SearchPresenterContract, LastFMR
     @Override
     public void onDataRetrieved(TagTracksResponse searchResponse) {
             if (searchResponse != null && searchResponse.getTracks() != null) {
-                viewContract.displaySearchResults(searchResponse.getTracks().getTrack(), searchResponse.getTracks().getTrack().size());
+                int size = searchResponse.getTracks().getTrack().size();
+                viewContract.displaySearchResults(searchResponse.getTracks().getTrack(), 101);
             } else {
                 viewContract.displayError("System error");
             }
