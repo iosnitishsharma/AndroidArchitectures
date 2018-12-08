@@ -12,7 +12,7 @@ package="com.nitishsharma7.androidarchitectures">
 
 
     <activity
-        android:name="com.nitishsharma7.androidarchitectures.TagTopSongs"
+        android:name="com.nitishsharma7.androidarchitectures.searchgenres.TagTopSongs"
         android:label="@string/title_activity_tag_top_songs"
         android:theme="@style/AppTheme.Template.Base">
         <intent-filter>

@@ -1,4 +1,4 @@
-package com.nitishsharma7.androidarchitectures;
+package com.nitishsharma7.androidarchitectures.searchgenres;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -26,30 +27,28 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.nitishsharma7.androidarchitectures.models.tagtoptracks.TagTracksResponse;
+import com.nitishsharma7.androidarchitectures.R;
+import com.nitishsharma7.androidarchitectures.lastfmrepository.LastFMAPI;
+import com.nitishsharma7.androidarchitectures.lastfmrepository.LastFMRepository;
 import com.nitishsharma7.androidarchitectures.models.tagtoptracks.Track;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 
-public class TagTopSongs extends AppCompatActivity {
+public class TagTopSongs extends AppCompatActivity  implements  SearchViewContract{
 
     private RecyclerView recyclerView;
     private Toolbar toolbar;
     private SwipeRefreshLayout swipeRefreshRecyclerList;
     private RecyclerViewAdapter mAdapter;
     private ArrayList<Track> modelList = new ArrayList<>();
-
-    private LastFMAPI api;
+    private SearchTopSongsPresenter presenter = null;
     private  String searchText ;
-
+     ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +58,8 @@ public class TagTopSongs extends AppCompatActivity {
         initToolbar(getString(R.string.toolbar_title));
         setAdapter();
         setUpSearch();
+
+      progressDialog   = new ProgressDialog(TagTopSongs.this);
         swipeRefreshRecyclerList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -77,13 +78,51 @@ public class TagTopSongs extends AppCompatActivity {
 
     }
 
+    @Override
+    public void displayEmpty() {
+        showErrorMessage("empty");
+    }
+
+    @Override
+    public void displayError() {
+        progressDialog.dismiss();
+        showFailedDialog("");
+    }
+
+    @Override
+    public void displayError(String s) {
+        progressDialog.dismiss();
+        showFailedDialog("");
+    }
+
+
+    @Override
+    public void displayProgressBar() {
+        progressDialog.setMessage("Please wait...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+    }
+
+    @Override
+    public void displaySearchResults(@NonNull List<Track> searchResults, @Nullable Integer totalCount) {
+        progressDialog.dismiss();
+        handleSearchResults(searchResults);
+    }
+
+
+
     private void setUpSearch() {
         final EditText genreSearch = findViewById(R.id.search_text);
+
         Retrofit retrofit =
                 new Retrofit.Builder()
                         .addConverterFactory(GsonConverterFactory.create())
                         .baseUrl("https://ws.audioscrobbler.com/2.0/").build();
-         api = retrofit.create(LastFMAPI.class);
+
+
+        LastFMRepository repository = new LastFMRepository(retrofit.create(LastFMAPI.class));
+        presenter = new SearchTopSongsPresenter(this, repository);
+
         genreSearch.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v,
@@ -91,7 +130,8 @@ public class TagTopSongs extends AppCompatActivity {
                                           KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                     try {
-                        searchTagTopSongs(api, genreSearch.getText().toString());
+                        searchText = genreSearch.getText().toString();
+                        presenter.searchSongs(genreSearch.getText().toString());
                     } catch (Exception e) {
                         Log.d("Exception123",e.toString());
                         e.printStackTrace();
@@ -182,60 +222,19 @@ public class TagTopSongs extends AppCompatActivity {
         mAdapter = new RecyclerViewAdapter(TagTopSongs.this, modelList);
         recyclerView.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-
         recyclerView.setLayoutManager(layoutManager);
-
-
         recyclerView.setAdapter(mAdapter);
-
-
         mAdapter.SetOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position, Track model) {
                 Toast.makeText(TagTopSongs.this, "Hello " + model.getName(), Toast.LENGTH_SHORT).show();
             }
         });
-            }
-
-    /**
-     * @param api Retrofit interface to fetch data from Lastfm
-     * @param query     search last fm  tag query
-     */
-
-    private void searchTagTopSongs(LastFMAPI api, String query) {
-        Call<TagTracksResponse> call = null;
-        try {
-           call = api.getGenreTopTracks(query, AppConstants.KEY);
-             searchText = query;
-
-           final ProgressDialog progressDialog = new ProgressDialog(TagTopSongs.this);
-            progressDialog.setMessage("Please wait...");
-            progressDialog.setCancelable(false);
-            progressDialog.show();
-
-          call.enqueue(new Callback<TagTracksResponse>() {
-            @Override
-            public void onResponse(Call<TagTracksResponse> call,
-                                   Response<TagTracksResponse> response) {
-                handleResponse(response);
-                progressDialog.dismiss();
-            }
-
-            @Override
-            public void onFailure(Call<TagTracksResponse> call,
-                                  Throwable t) {
-                progressDialog.dismiss();
-                showFailedDialog(t.getMessage());
-                Log.e("", "", t);
-                showErrorMessage(getString(R.string.error));
-            }
-        });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
-    private  void showFailedDialog(String message){
+
+
+ private   void showFailedDialog(String message){
         AlertDialog.Builder builder;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             builder = new AlertDialog.Builder(TagTopSongs.this, android.R.style.Theme_Material_Dialog_Alert);
@@ -246,8 +245,8 @@ public class TagTopSongs extends AppCompatActivity {
                 .setMessage(message+getString(R.string.try_again))
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        // continue with delete
-                        searchTagTopSongs(api,searchText);
+                        presenter.searchSongs(searchText);
+
                     }
                 })
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -260,23 +259,10 @@ public class TagTopSongs extends AppCompatActivity {
                 .show();
     }
 
-    private void handleResponse(@NonNull Response<TagTracksResponse> response) {
-        if (response.isSuccessful()) {
-            TagTracksResponse searchResponse = response.body();
-            if (searchResponse != null) {
-                handleSearchResults(searchResponse.getTracks().getTrack());
-            } else {
-                showErrorMessage("Error");
-            }
-        } else {
-            showErrorMessage("Error");
-        }
-    }
 
     private void showErrorMessage(String s) {
         Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
     }
-
 
     public void handleSearchResults(List<Track> searchResults) {
         mAdapter.updateList((ArrayList<Track>) searchResults);

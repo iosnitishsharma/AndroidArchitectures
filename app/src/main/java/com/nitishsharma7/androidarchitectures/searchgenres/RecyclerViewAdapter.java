@@ -1,4 +1,4 @@
-package com.nitishsharma7.androidarchitectures;
+package com.nitishsharma7.androidarchitectures.searchgenres;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.nitishsharma7.androidarchitectures.R;
 import com.nitishsharma7.androidarchitectures.models.tagtoptracks.Track;
 
 import java.util.ArrayList;
