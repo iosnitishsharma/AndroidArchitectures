@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">AndroidArchitectures</string>
+    <string name="title_activity_tag_top_songs">TagTopSongs</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="search_genre">Search Genre</string>
+    <string name="toolbar_title">Android Architectures</string>
+    <string name="error">Error</string>
+    <string name="error_genric">Something went Wrong</string>
+    <string name="try_again">Do you want to Try Again</string>
+    <string name="search">Search</string>
 </resources>
