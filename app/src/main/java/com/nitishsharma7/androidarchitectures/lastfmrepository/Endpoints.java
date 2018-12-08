@@ -1,4 +1,4 @@
-package com.nitishsharma7.androidarchitectures;
+package com.nitishsharma7.androidarchitectures.lastfmrepository;
 
 @SuppressWarnings({"UnusedDeclaration"})
 public interface Endpoints {
